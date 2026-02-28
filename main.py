@@ -1,6 +1,4 @@
-def main():
-    print("Hello from trackpad-helper!")
-
+from runtime.engine import run_swipe_up
 
 if __name__ == "__main__":
-    main()
+    run_swipe_up()
