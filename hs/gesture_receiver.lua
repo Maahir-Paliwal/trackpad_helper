@@ -1,3 +1,6 @@
+hs.alert.show("gesture_receiver.lua loaded")
+print("gesture_receiver.lua loaded")
+
 local port = 7777
 local sock = hs.socket.udp.server(port)
 
@@ -6,7 +9,7 @@ if not sock then
     return 
 end
 
-sock:receive(function(data, addr))
+sock:receive(function(data, addr)
     if not data then return
     end
 
@@ -16,6 +19,6 @@ sock:receive(function(data, addr))
         -- Scroll wheel event: {dx,dy} in "scroll units"
         hs.eventtap.scrollWheel({0,dy}, {}, "pixel")
     end
-end
+end)
 
 hs.alert.show("Gesture receiver running on UDP " .. port)
