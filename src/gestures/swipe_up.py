@@ -15,6 +15,7 @@ MIDDLE_PIP = 10
 class TrackState:
     last_y: float
     last_t: float
+    start_t: float
     accum_up: float
 
 
@@ -23,7 +24,7 @@ class TwoFingerSwipeUpDetector:
             self, 
             min_up_movement: float = 0.10,# normalized y movement [0,1]
             max_window_s: float = 0.45, 
-            cooldown_s: float = 0.70,
+            cooldown_s: float = 0.45,
     ) -> None:
         self.min_up_movement = min_up_movement
         self.max_window_s = max_window_s
@@ -60,26 +61,28 @@ class TwoFingerSwipeUpDetector:
         
         y = self.avg_two_tip_y(hand_norm)
 
+        # if it is the first frame which recognizes the movement
         if self.state is None:
-             self.state = TrackState(last_y=y, last_t=now, accum_up=0.0)
+             self.state = TrackState(last_y=y, last_t=now, accum_up=0.0, start_t=now)
              return False
         
-        dt = now - self.state.last_t
+        dt = now - self.state.last_t        # keep for some acceleration calculation maybe
         if dt <= 0:
+             return False
+        
+        #reset if too slow
+        if (now - self.state.start_t) > self.max_window_s:
+             self.state = TrackState(last_y=y, last_t=now, accum_up=0.0, start_t=now)
              return False
         
         #upward movement means y decreases
         dy = self.state.last_y - y          # y1 - y2 pos if moving up 
         self.state.accum_up += max(dy, 0.0)
         self.state.last_y = y
-        self.state.last_t = now
+        self.state.last_t = now             # no need to adjust start_t
+
         
-        #reset if too slow
-        if dt > self.max_window_s:
-             self.state = TrackState(last_y=y, last_t=now, accum_up=0.0)
-             return False
-        
-        if self.state.accum_up >= self.min_up_movement: # TODO: understand accum_up
+        if self.state.accum_up >= self.min_up_movement:
              self.state = None
              self.cooldown_until = now + self.cooldown_s
              return True
