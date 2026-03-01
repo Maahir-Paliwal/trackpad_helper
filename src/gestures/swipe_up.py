@@ -15,23 +15,18 @@ MIDDLE_PIP = 10
 class TrackState:
     last_y: float
     last_t: float
-    start_t: float
-    accum_up: float
-
 
 class TwoFingerSwipeUpDetector:
     def __init__(
             self, 
-            min_up_movement: float = 0.10,# normalized y movement [0,1]
-            max_window_s: float = 0.45, 
-            cooldown_s: float = 0.45,
+            deadband_px: int = 2,           # ignore tiny jitters
+            sensitivity: float = 1.6,       # higher is faster scrolls
+            max_step_px: int = 80           # clamp to avoid misreads and spikes           
     ) -> None:
-        self.min_up_movement = min_up_movement
-        self.max_window_s = max_window_s
-        self.cooldown_s = cooldown_s
-
+        self.deadband_px = deadband_px
+        self.sensitivity = sensitivity
+        self.max_step_px = max_step_px
         self.state: Optional[TrackState] = None
-        self.cooldown_until = 0.0
     
     @staticmethod
     def two_fingers_extended(hand_norm: np.ndarray) -> bool:
@@ -44,48 +39,41 @@ class TwoFingerSwipeUpDetector:
     def avg_two_tip_y(hand_norm: np.ndarray) -> float:
         return float((hand_norm[INDEX_TIP, 1] + hand_norm[MIDDLE_TIP,1]) / 2.0)
     
-    def update(self, hand_norm: Optional[np.ndarray]) -> bool:
+    def update(self, hand_norm: Optional[np.ndarray], frame_h: int) -> Optional[int]:
         
         now = time.monotonic()
 
-        if now < self.cooldown_until:
-            return False
-        
         if hand_norm is None:
                 self.state = None
-                return False
+                return None
         
         if not self.two_fingers_extended(hand_norm):
              self.state = None
-             return False
+             return None
         
         y = self.avg_two_tip_y(hand_norm)
 
         # if it is the first frame which recognizes the movement
         if self.state is None:
-             self.state = TrackState(last_y=y, last_t=now, accum_up=0.0, start_t=now)
-             return False
-        
-        dt = now - self.state.last_t        # keep for some acceleration calculation maybe
-        if dt <= 0:
-             return False
-        
-        #reset if too slow
-        if (now - self.state.start_t) > self.max_window_s:
-             self.state = TrackState(last_y=y, last_t=now, accum_up=0.0, start_t=now)
-             return False
+             self.state = TrackState(last_y=y, last_t=now)
+             return None
         
         #upward movement means y decreases
-        dy = self.state.last_y - y          # y1 - y2 pos if moving up 
-        self.state.accum_up += max(dy, 0.0)
+        dy_norm = self.state.last_y - y          # y1 - y2 pos if moving up 
         self.state.last_y = y
-        self.state.last_t = now             # no need to adjust start_t
+        self.state.last_t = now
+
+        dy_px = int(dy_norm * frame_h * self.sensitivity)
+
+        # deadbacd to kill jitter
+        if abs(dy_px) < self.deadband_px:
+             return None
 
         
-        if self.state.accum_up >= self.min_up_movement:
-             self.state = None
-             self.cooldown_until = now + self.cooldown_s
-             return True
+        if dy_px > self.max_step_px:
+             dy_px = self.max_step_px
+        elif dy_px < -self.max_step_px:
+             dy_px = -self.max_step_px
         
-        return False
+        return dy_px
              

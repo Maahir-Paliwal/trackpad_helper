@@ -18,9 +18,7 @@ def run_swipe_up():
 
     backend = HammerSpoonBackend(port=7777)
     detector = TwoFingerSwipeUpDetector(
-        min_up_movement=0.10, 
-        max_window_s= 0.45,
-        cooldown_s=0.70
+        sensitivity=1.6
     )
 
     with Camera(0) as cam, HandsTask(num_hands=1) as hands:
@@ -29,10 +27,13 @@ def run_swipe_up():
                 break
             res = hands.detect(frame)
             #use first hand if present
+            h, w = frame.shape[:2]
             hand_norm = res.hands[0].norm_landmarks if res.hands else None
 
-            if detector.update(hand_norm):
-                backend.scroll(dy=-220)
+            dy_px = detector.update(hand_norm, frame_h=h)
+
+            if dy_px is not None:
+                backend.scroll(dy=-dy_px)
             
             #debug window
             cv2.imshow("debug", frame)
