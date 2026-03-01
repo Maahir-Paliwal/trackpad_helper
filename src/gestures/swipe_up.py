@@ -15,6 +15,7 @@ MIDDLE_PIP = 10
 class TrackState:
     last_y: float
     last_t: float
+    last_dy: float
 
 class TwoFingerSwipeUpDetector:
     def __init__(
@@ -59,29 +60,31 @@ class TwoFingerSwipeUpDetector:
 
         # if it is the first frame which recognizes the movement
         if self.state is None:
-             self.state = TrackState(last_y=y, last_t=now)
+             self.state = TrackState(last_y=y, last_t=now, last_dy=0.0)
              return None
         
         #upward movement means y decreases
-        dy_norm = self.state.last_y - y          # y1 - y2 pos if moving up 
-        dt = now - self.state.last_t
+        dy_now = self.state.last_y - y          # y1 - y2 pos if moving up 
         self.state.last_y = y
         self.state.last_t = now
 
-        #velocity based scrolling
-        v = dy_norm / dt
 
-        v_px = int(v * frame_h * self.sensitivity)
+
+        dy_smooth = 0.8 * self.state.last_dy + 0.2 * dy_now
+        self.state.last_dy = dy_now             # update last_dy after usage
+        
+        dy_px = int(dy_smooth * frame_h * self.sensitivity)
+
 
         # deadbacd to kill jitter
-        if abs(v_px) < self.deadband_px:
+        if abs(dy_px) < self.deadband_px:
              return None
 
         
-        if v_px > self.max_step_px:
-            v_px = self.max_step_px
-        elif v_px < -self.max_step_px:
-            v_px = -self.max_step_px
+        if dy_px > self.max_step_px:
+            dy_px = self.max_step_px
+        elif dy_px < -self.max_step_px:
+            dy_px = -self.max_step_px
         
-        return v_px
+        return dy_px
              
