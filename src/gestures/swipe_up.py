@@ -19,7 +19,7 @@ class TrackState:
 class TwoFingerSwipeUpDetector:
     def __init__(
             self, 
-            deadband_px: int = 2,           # ignore tiny jitters
+            deadband_px: int = 5,           # ignore tiny jitters
             sensitivity: float = 1.6,       # higher is faster scrolls
             max_step_px: int = 80           # clamp to avoid misreads and spikes           
     ) -> None:
@@ -64,20 +64,24 @@ class TwoFingerSwipeUpDetector:
         
         #upward movement means y decreases
         dy_norm = self.state.last_y - y          # y1 - y2 pos if moving up 
+        dt = now - self.state.last_t
         self.state.last_y = y
         self.state.last_t = now
 
-        dy_px = int(dy_norm * frame_h * self.sensitivity)
+        #velocity based scrolling
+        v = dy_norm / dt
+
+        v_px = int(v * frame_h * self.sensitivity)
 
         # deadbacd to kill jitter
-        if abs(dy_px) < self.deadband_px:
+        if abs(v_px) < self.deadband_px:
              return None
 
         
-        if dy_px > self.max_step_px:
-             dy_px = self.max_step_px
-        elif dy_px < -self.max_step_px:
-             dy_px = -self.max_step_px
+        if v_px > self.max_step_px:
+            v_px = self.max_step_px
+        elif v_px < -self.max_step_px:
+            v_px = -self.max_step_px
         
-        return dy_px
+        return v_px
              
