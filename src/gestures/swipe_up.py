@@ -28,12 +28,14 @@ class TwoFingerSwipeUpDetector:
         self.max_step_px = max_step_px
         self.state: Optional[TrackState] = None
     
+    
     @staticmethod
     def two_fingers_extended(hand_norm: np.ndarray) -> bool:
         # y decreases upward in image coords
         index_extended = hand_norm[INDEX_TIP,1] < hand_norm[INDEX_PIP, 1]
         middle_extended = hand_norm[MIDDLE_TIP,1] < hand_norm[MIDDLE_PIP,1]
         return bool(index_extended and middle_extended)
+    
     
     @staticmethod
     def avg_two_tip_y(hand_norm: np.ndarray) -> float:
@@ -47,10 +49,12 @@ class TwoFingerSwipeUpDetector:
                 self.state = None
                 return None
         
+        
         if not self.two_fingers_extended(hand_norm):
              self.state = None
              return None
         
+
         y = self.avg_two_tip_y(hand_norm)
 
         # if it is the first frame which recognizes the movement
