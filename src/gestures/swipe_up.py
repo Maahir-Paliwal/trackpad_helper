@@ -69,10 +69,10 @@ class TwoFingerSwipeUpDetector:
         self.state.last_t = now
 
 
-
+        #smooth with last reading
         dy_smooth = 0.8 * self.state.last_dy + 0.2 * dy_now
         self.state.last_dy = dy_now             # update last_dy after usage
-        
+
         dy_px = int(dy_smooth * frame_h * self.sensitivity)
 
 
