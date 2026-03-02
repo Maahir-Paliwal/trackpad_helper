@@ -21,16 +21,18 @@ def run_swipe_up():
         sensitivity=1.6
     )
 
-    with Camera(0) as cam, HandsTask(num_hands=1) as hands:
+    with Camera(0) as cam, HandsTask(num_hands=2) as hands:
         for frame in cam.frames():
             if not running:
                 break
             res = hands.detect(frame)
             #use first hand if present
             h, w = frame.shape[:2]
-            hand_norm = res.hands[0].norm_landmarks if res.hands else None
 
-            dy_px = detector.update(hand_norm, frame_h=h)
+            right_hand_hands_result = HandsTask.getRightHand(res) if res else None          # ensures that res is not None
+            right_hand_norm = right_hand_hands_result.norm_landmarks if right_hand_hands_result else None
+
+            dy_px = detector.update(right_hand_norm, frame_h=h)
 
             if dy_px is not None:
                 backend.scroll(dy=-dy_px)

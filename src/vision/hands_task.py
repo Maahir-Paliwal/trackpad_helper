@@ -8,11 +8,15 @@ import time
 import cv2
 import numpy as np
 import mediapipe as mp
+from typing import Optional
 
 BaseOptions = mp.tasks.BaseOptions
 HandLandmarker = mp.tasks.vision.HandLandmarker
 HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
 VisionRunningMode = mp.tasks.vision.RunningMode
+
+THUMB_TIP = 4
+PINKY_TIP = 20
 
 @dataclass(frozen=True)
 class HandLandmarks:
@@ -42,6 +46,16 @@ class HandsTask:
 
     def __exit__(self, exc_type, exc, tb) -> None:
         self.close()
+
+    @staticmethod
+    def getRightHand(hand_landmarks : HandsResult) -> Optional[HandLandmarks]:
+
+        for hand in hand_landmarks.hands: 
+            if hand.norm_landmarks[THUMB_TIP,0] > hand.norm_landmarks[PINKY_TIP,0]:   # thumb to the left of pinky (right hand if hand is normal)
+                return hand
+        return None                 # no right hand was found
+
+
 
     def detect(self, frame_bgr : np.ndarray) -> HandsResult:
         h,w = frame_bgr.shape[:2]
