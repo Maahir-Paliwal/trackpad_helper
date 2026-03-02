@@ -15,7 +15,7 @@ MIDDLE_PIP = 10
 class TrackState:
     last_y: float
     last_t: float
-    last_dy: float
+    last_dy: float          # for smoothing in scroll
 
 class TwoFingerSwipeUpDetector:
     def __init__(
