@@ -1,10 +1,10 @@
 import signal 
 import cv2
 
-from vision.camera import Camera
-from vision.hands_task import HandsTask
-from gestures.swipe_up import TwoFingerSwipeUpDetector
-from actions.hs_socket import HammerSpoonBackend
+from trackpad_helper.vision.camera import Camera
+from trackpad_helper.vision.hands_task import HandsTask
+from trackpad_helper.gestures.swipe_up import TwoFingerSwipeUpDetector
+from trackpad_helper.actions.hs_socket import HammerSpoonBackend
 
 running = True
 def stop(*_):
@@ -37,9 +37,11 @@ def run_swipe_up():
             if dy_px is not None:
                 backend.scroll(dy=-dy_px)
             
+            '''
             #debug window
             cv2.imshow("debug", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
+            '''
 
     cv2.destroyAllWindows()

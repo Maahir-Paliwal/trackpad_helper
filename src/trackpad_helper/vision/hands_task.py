@@ -29,7 +29,7 @@ class HandsResult:
 
 class HandsTask:
     def __init__(self, num_hands: int = 2) -> None:
-        model_path = str(Path(__file__).resolve().parent.parent.parent / "model" / "hand_landmarker.task")
+        model_path = str(Path(__file__).resolve().parent.parent.parent.parent / "model" / "hand_landmarker.task")
         options = HandLandmarkerOptions(
             base_options=BaseOptions(model_asset_path=model_path),
             running_mode=VisionRunningMode.VIDEO,

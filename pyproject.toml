@@ -8,3 +8,10 @@ dependencies = [
     "mediapipe>=0.10.32",
     "opencv-python>=4.13.0.92",
 ]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
